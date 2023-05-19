@@ -165,8 +165,9 @@ class DBEnv:
                                               self.db.host,
                                               self.db.port,
                                               self.db.user,
+                                              self.db.passwd,
                                               150,
-                                              800000,
+                                              80000,
                                               BENCHMARK_WARMING_TIME,
                                               self.threads,
                                               BENCHMARK_RUNNING_TIME,
@@ -295,7 +296,7 @@ class DBEnv:
 
 
     def step_GP(self, knobs, collect_resource=True):
-        #return False, np.random.rand(6), np.random.rand(65), np.random.rand(8)
+        # return False, np.random.rand(6), np.random.rand(65), np.random.rand(8)
         # re-init database if activated
         if self.reinit_interval > 0 and self.reinit_interval % RESTART_FREQUENCY == 0:
             if self.reinit:
@@ -420,5 +421,6 @@ class DBEnv:
             constraints = self.get_constraints(res)
             return objs, constraints, external_metrics, resource, list(internal_metrics), self.info, trial_state
 
-        except:
+        except Exception as ex:
+            logger.warn('set gp get exception')
             return None, None, {}, {}, [], self.info, FAILED

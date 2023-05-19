@@ -1,5 +1,5 @@
 pandas
-numpy
+numpy<1.24
 scikit_learn==0.22.2.post1
 torch>=1.5.0
 mysql-connector-python-rf
@@ -27,3 +27,15 @@ dynaconf
 shap
 lightgbm
 paramiko==2.8
+
+# add by test
+xgboost
+dill
+
+# need by OnlineTune
+#psycopg2 #yum install postgresql-devel
+#tensorflow==1.14.0
+#GPy
+#GPyOpt
+#ruamel.yaml
+#nltk

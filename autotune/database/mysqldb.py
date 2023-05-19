@@ -51,7 +51,7 @@ class MysqlDB:
                                 'user': self.user,
                                 'passwd': self.passwd,
                                 'name': self.dbname}
-        if not self.remote_mode:
+        if not self.remote_mode and self.host != "localhost":
             self.connection_info['socket'] = self.sock
         # resource isolation information
         self.isolation_mode = eval(args['isolation_mode'])
@@ -101,7 +101,7 @@ class MysqlDB:
                 continue
             cnf_parser.set(key, knobs[key])
 
-        cnf_parser.replace('/data2/ruike/tmpdir/mysql.cnf')
+        cnf_parser.replace('/root/tmpdir/mysql.cnf')
 
         if self.remote_mode:
             ssh = paramiko.SSHClient()
@@ -180,7 +180,8 @@ class MysqlDB:
                     logger.info('Failed: add {} to memory,cpuset:server'.format(self.pid))
 
         else:
-            proc = subprocess.Popen([self.mysqld, '--defaults-file={}'.format(self.mycnf)])
+            proc = subprocess.Popen(
+                [self.mysqld, '--user=root', '--defaults-file={}'.format(self.mycnf)])
             self.pid = proc.pid
             if self.isolation_mode:
                 command = 'sudo cgclassify -g memory,cpuset:server ' + str(self.pid)
@@ -291,6 +292,7 @@ class MysqlDB:
                 self.apply_knobs_online(tmp)
                 knobs['innodb_thread_concurrency'] = true_concurrency
         except:
+            logger.warn('apply knobs offline failed')
             sucess = False
 
         return sucess

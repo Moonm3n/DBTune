@@ -142,7 +142,7 @@ class PipleLine(BOBase):
                 with open("tools/{}_best_optimizer.pkl".format(hold_out_workload), 'rb') as f:
                     self.best_method_id_list = pickle.load(f)
 
-        self.logger.info("Total space size:{}".format(estimate_size(self.config_space, '/data2/ruike/DBTune/scripts/experiment/gen_knobs/mysql_all_197_32G.json')))
+        self.logger.info("Total space size:{}".format(estimate_size(self.config_space, 'scripts/experiment/gen_knobs/mysql_all_197_32G.json')))
         advisor_kwargs = advisor_kwargs or {}
         # init history container
         if self.num_objs == 1:
@@ -275,62 +275,66 @@ class PipleLine(BOBase):
 
     def run(self):
         compact_space = None
-        for _ in tqdm(range(self.iteration_id, self.max_iterations)):
-            if self.budget_left < 0:
-                self.logger.info('Time %f elapsed!' % self.runtime_limit)
-                break
+        try:
+            for _ in tqdm(range(self.iteration_id, self.max_iterations)):
+                if self.budget_left < 0:
+                    self.logger.info('Time %f elapsed!' % self.runtime_limit)
+                    break
 
-            start_time = time.time()
-            self.iter_begin_time = start_time
-            # get another compact space
-            if (self.space_transfer or self.auto_optimizer) and (self.space_step >= self.space_step_limit):
-                self.space_step_limit = 3
-                self.space_step = 0
-                if self.space_transfer:
-                    compact_space = self.get_compact_space()
+                start_time = time.time()
+                self.iter_begin_time = start_time
+                # get another compact space
+                if (self.space_transfer or self.auto_optimizer) and (self.space_step >= self.space_step_limit):
+                    self.space_step_limit = 3
+                    self.space_step = 0
+                    if self.space_transfer:
+                        compact_space = self.get_compact_space()
 
-                if self.auto_optimizer:
-                    self.optimizer = self.select_optimizer(type=self.auto_optimizer_type, space=self.config_space if compact_space is None else compact_space)
+                    if self.auto_optimizer:
+                        self.optimizer = self.select_optimizer(type=self.auto_optimizer_type, space=self.config_space if compact_space is None else compact_space)
 
-                if self.space_transfer and not compact_space == self.optimizer.config_space:
-                    if isinstance(self.optimizer, GA_Optimizer):
-                        self.optimizer = GA_Optimizer(compact_space,
-                                                      self.history_container,
-                                                      num_objs=self.num_objs,
-                                                      num_constraints=self.num_constraints,
-                                                      output_dir=self.optimizer.output_dir,
-                                                      random_state=self.random_state)
-                        if self.auto_optimizer:
-                            self.optimizer_list[-1] = self.optimizer
-
-                    if isinstance(self.optimizer, DDPG_Optimizer):
-                        self.optimizer = DDPG_Optimizer(compact_space,
+                    if self.space_transfer and not compact_space == self.optimizer.config_space:
+                        if isinstance(self.optimizer, GA_Optimizer):
+                            self.optimizer = GA_Optimizer(compact_space,
                                                         self.history_container,
-                                                        metrics_num=self.num_metrics,
-                                                        task_id=self.history_container.task_id,
-                                                        params=self.optimizer.params,
-                                                        batch_size=self.optimizer.batch_size,
-                                                        mean_var_file=self.optimizer.mean_var_file)
-                        if self.auto_optimizer:
-                            self.optimizer_list[-2] = self.optimizer
+                                                        num_objs=self.num_objs,
+                                                        num_constraints=self.num_constraints,
+                                                        output_dir=self.optimizer.output_dir,
+                                                        random_state=self.random_state)
+                            if self.auto_optimizer:
+                                self.optimizer_list[-1] = self.optimizer
+
+                        if isinstance(self.optimizer, DDPG_Optimizer):
+                            self.optimizer = DDPG_Optimizer(compact_space,
+                                                            self.history_container,
+                                                            metrics_num=self.num_metrics,
+                                                            task_id=self.history_container.task_id,
+                                                            params=self.optimizer.params,
+                                                            batch_size=self.optimizer.batch_size,
+                                                            mean_var_file=self.optimizer.mean_var_file)
+                            if self.auto_optimizer:
+                                self.optimizer_list[-2] = self.optimizer
 
 
-            if self.space_transfer:
-                space = compact_space if not compact_space is None else self.config_space
-                self.logger.info("[Iteration {}] [{},{}] Total space size:{}".format(self.iteration_id,self.space_step , self.space_step_limit, estimate_size(space, self.knob_config_file)))
+                if self.space_transfer:
+                    space = compact_space if not compact_space is None else self.config_space
+                    self.logger.info("[Iteration {}] [{},{}] Total space size:{}".format(self.iteration_id,self.space_step , self.space_step_limit, estimate_size(space, self.knob_config_file)))
 
-            _ , _, _, objs = self.iterate(compact_space)
+                _ , _, _, objs = self.iterate(compact_space)
 
-            # determine whether explore one more step in the space
-            if (self.space_transfer or self.auto_optimizer) and  len(self.history_container.get_incumbents()) > 0 and objs[0] < self.history_container.get_incumbents()[0][1]:
-                self.space_step_limit += 1
+                # determine whether explore one more step in the space
+                if (self.space_transfer or self.auto_optimizer) and  len(self.history_container.get_incumbents()) > 0 and objs[0] < self.history_container.get_incumbents()[0][1]:
+                    self.space_step_limit += 1
 
-            self.save_history()
-            runtime = time.time() - start_time
-            self.budget_left -= runtime
-            # recode the step in the space
-            if self.space_transfer or self.auto_optimizer:
-                self.space_step += 1
+                self.save_history()
+                runtime = time.time() - start_time
+                self.budget_left -= runtime
+                # recode the step in the space
+                if self.space_transfer or self.auto_optimizer:
+                    self.space_step += 1
+
+        except Exception as e:
+            logger.error('run pipeline error: %s' % str(e))
 
         return self.get_history()
 

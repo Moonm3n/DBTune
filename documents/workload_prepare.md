@@ -1,4 +1,4 @@
-# Workload Preparation 
+earl# Workload Preparation 
 
 DBTune currently supports three database benchmarks:  <a href="https://github.com/oltpbenchmark/oltpbench.git" target="_blank" rel="nofollow">OLTP\-Bench</a>,  <a href="https://github.com/akopytov/sysbench.git" target="_blank" rel="nofollow">SYSBENCH</a>  and <a href="https://github.com/winkyao/join-order-benchmark" target="_blank" rel="nofollow">JOB</a>. 
 
@@ -7,15 +7,19 @@ DBTune currently supports three database benchmarks:  <a href="https://github.co
 Download and install
 
 ```shell
-git clone https://github.com/akopytov/sysbench.git
+git clone git@github.com:akopytov/sysbench.git
+cd sysbench
 ./autogen.sh
 ./configure
 make && make install
+make -j 32 && make install
 ```
 
 Load data
 
 ```shell
+sysbench --db-driver=mysql --mysql-host=localhost --mysql-port=3306 --mysql-user=root --mysql-password=12345678 --mysql-db=sbtest --table_size=80000 --tables=150 --events=0 --threads=32 oltp_read_write prepare > sysbench_prepare.out
+sysbench --db-driver=mysql --mysql-host=127.0.0.1 --mysql-port=3324 --mysql-user=root --mysql-password=19961996 --mysql-db=sbtest --table_size=800000 --tables=150 --events=0 --threads=32 oltp_read_write prepare > sysbench_prepare.out
 sysbench --db-driver=mysql --mysql-host=$HOST --mysql-socket=$SOCK --mysql-port=$MYSQL_PORT --mysql-user=root --mysql-password=$PASSWD --mysql-db=sbtest --table_size=800000 --tables=150 --events=0 --threads=32 oltp_read_write prepare > sysbench_prepare.out
 ```
 

@@ -8,7 +8,10 @@ from autotune.utils.util_funcs import get_types
 
 def build_surrogate(func_str='gp', config_space=None, rng=None, history_hpo_data=None, context=None):
     assert config_space is not None
-    func_str = func_str.lower()
+    if func_str is None:
+        func_str = 'gp'
+    else:
+        func_str = func_str.lower()
     types, bounds = get_types(config_space)
     seed = rng.randint(MAXINT)
 

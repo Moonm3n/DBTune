@@ -304,8 +304,9 @@ class BO_Optimizer(object, metaclass=abc.ABCMeta):
                 self.surrogate_model[i].train(X, Y[:, i])
 
             # train constraint model
-        for i in range(self.num_constraints):
-            self.constraint_models[i].train(X, cY[:, i])
+        if cY.size > 0:
+            for i in range(self.num_constraints):
+                self.constraint_models[i].train(X, cY[:, i])
 
         return X, Y, cY
 
@@ -321,7 +322,7 @@ class BO_Optimizer(object, metaclass=abc.ABCMeta):
 
         self.alter_model(history_container)
 
-        if self.optimization_strategy == 'random':
+        if self.optimization_strategy == 'random' or len(history_container.get_incumbents()) == 0:
             return self.sample_random_configs(num_configs=1, excluded_configs=history_container.configurations)[0]
 
         if (not return_list) and self.rng.random() < self.rand_prob:

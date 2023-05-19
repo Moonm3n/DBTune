@@ -94,6 +94,7 @@ class ResourceMonitor:
                 continue
             cpu = self.process.cpu_percent(interval=self.interval)
             self.cpu_usage_seq.append(cpu)
+            time.sleep(self.interval)
             count += 1
 
     def terminate(self):

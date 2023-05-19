@@ -10,7 +10,7 @@ else
     run_script="oltp_read_write"
 fi
 
-${SYSBENCH_BIN} ${run_script} \
+sysbench ${run_script} \
         --mysql-host=$2 \
         --mysql-port=$3 \
         --mysql-user=$4 \

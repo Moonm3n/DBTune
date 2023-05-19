@@ -109,7 +109,7 @@ def parse_sysbench(file_path):
         return [tps, latency, qps, tps_var, lat_var, qps_var]
 
     else:
-        print('num_samples is zero!')
+        logger.warn('num_samples of %s is zero' % (file_path))
         return[-1, -1, -1, -1, -1, -1]
 
 
